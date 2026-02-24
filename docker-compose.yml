@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        - VITE_API_BASE=http://blue:8080/api
+        - VITE_WS_BASE=ws://blue:8080/ws
+    ports:
+      - "1234:80"
+    restart: unless-stopped
