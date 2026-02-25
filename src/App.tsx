@@ -1,11 +1,44 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Map from './components/Map/Map';
 import { useLocationData } from './hooks/useLocationData';
-import { MapPin, Smartphone, RefreshCw, Layers } from 'lucide-react';
+import { MapPin, Smartphone, RefreshCw, Layers, LogOut } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './components/Auth/Login';
+import {
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
+} from '@mui/material';
 
-function App() {
-  const [userId, setUserId] = useState('00000000-0000-0000-0000-000000000000'); // Default demo UUID
-  const { devices, locations, loading, error, refetch } = useLocationData(userId);
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#3b82f6',
+    },
+    background: {
+      default: '#0f172a',
+      paper: '#1e293b',
+    },
+  },
+});
+
+function Dashboard() {
+  const { user, logout } = useAuth();
+  const { devices, locations, loading, error, refetch } = useLocationData(user?.id || '');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('all');
+
+  const filteredDevices = useMemo(() => {
+    if (selectedDeviceId === 'all') return devices;
+    return devices.filter(d => d.id === selectedDeviceId);
+  }, [devices, selectedDeviceId]);
 
   return (
     <div className="app-container">
@@ -15,36 +48,37 @@ function App() {
             <MapPin className="text-accent" style={{ color: 'var(--accent-primary)' }} />
             OpenLoc
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            Real-time device tracking
-          </p>
+          <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mt: 0.5 }}>
+            Logged in as: {user?.email}
+          </Typography>
         </header>
 
         <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }}>
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-              User ID
-            </label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Enter User UUID"
-              style={{
-                width: '100%',
-                backgroundColor: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '0.75rem',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none'
-              }}
-            />
-          </div>
+          <Box sx={{ mb: 3 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="device-select-label" sx={{ color: 'var(--text-muted)' }}>Filter Device</InputLabel>
+              <Select
+                labelId="device-select-label"
+                id="device-select"
+                value={selectedDeviceId}
+                label="Filter Device"
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                sx={{
+                  bgcolor: 'var(--bg-tertiary)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
+                }}
+              >
+                <MenuItem value="all">All Devices</MenuItem>
+                {devices.map(device => (
+                  <MenuItem key={device.id} value={device.id}>{device.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '0.875rem', fontWeight: 600 }}>Devices ({devices.length})</h2>
+            <h2 style={{ fontSize: '0.875rem', fontWeight: 600 }}>Devices ({filteredDevices.length})</h2>
             <button
               onClick={refetch}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
@@ -59,7 +93,7 @@ function App() {
             ) : error ? (
               <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{error}</p>
             ) : (
-              devices.map(device => {
+              filteredDevices.map(device => {
                 const hasLocation = !!locations[device.id];
                 return (
                   <div
@@ -94,15 +128,31 @@ function App() {
           </div>
         </div>
 
-        <footer style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-          OpenStreetMap Dark Mode
+        <footer style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>OpenLoc</span>
+          <button
+            onClick={logout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: 600
+            }}
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
         </footer>
       </aside>
 
       <main style={{ flex: 1, height: '100%', position: 'relative' }}>
-        <Map locations={locations} devices={devices} />
+        <Map locations={locations} devices={filteredDevices} />
 
-        {/* Floating Glass Control */}
         <div style={{
           position: 'absolute',
           top: '1.5rem',
@@ -121,10 +171,38 @@ function App() {
           color: 'var(--text-primary)'
         }}>
           <Layers size={18} />
-          Dark Matter
+          {selectedDeviceId === 'all' ? 'Tracking All' : 'Tracking Selected'}
         </div>
       </main>
     </div>
+  );
+}
+
+function PrivateRoute({ children }: { children: React.ReactElement }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" />;
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
