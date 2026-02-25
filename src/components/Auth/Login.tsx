@@ -8,8 +8,11 @@ import {
     Paper,
     Alert,
     CircularProgress,
-    Link
+    Link,
+    IconButton,
+    InputAdornment
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 
@@ -18,6 +21,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
@@ -148,12 +152,26 @@ const Login: React.FC = () => {
                             fullWidth
                             name="password"
                             label="Password"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             id="password"
                             autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             variant="outlined"
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            edge="end"
+                                            sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                                        >
+                                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
                             sx={{
                                 mb: 3,
                                 '& .MuiOutlinedInput-root': {

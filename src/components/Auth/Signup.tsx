@@ -8,8 +8,11 @@ import {
     Paper,
     Alert,
     CircularProgress,
-    Link
+    Link,
+    IconButton,
+    InputAdornment
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 
@@ -19,6 +22,8 @@ const Signup: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
@@ -171,12 +176,26 @@ const Signup: React.FC = () => {
                             fullWidth
                             name="password"
                             label="Password"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             id="password"
                             autoComplete="new-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             variant="outlined"
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            edge="end"
+                                            sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                                        >
+                                            {showPassword ? <Visibility /> : <VisibilityOff />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
                             sx={{
                                 mb: 2,
                                 '& .MuiOutlinedInput-root': {
@@ -196,12 +215,26 @@ const Signup: React.FC = () => {
                             fullWidth
                             name="confirmPassword"
                             label="Confirm Password"
-                            type="password"
+                            type={showConfirmPassword ? 'text' : 'password'}
                             id="confirmPassword"
                             autoComplete="new-password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             variant="outlined"
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle confirm password visibility"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            edge="end"
+                                            sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                                        >
+                                            {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
                             sx={{
                                 mb: 3,
                                 '& .MuiOutlinedInput-root': {
