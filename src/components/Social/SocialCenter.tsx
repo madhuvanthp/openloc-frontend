@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
-    Container,
-    Paper,
     Tabs,
     Tab,
     TextField,
@@ -142,139 +140,151 @@ const SocialCenter: React.FC = () => {
     };
 
     return (
-        <Container maxWidth="md" sx={{ mt: 2, mb: 2 }}>
-            <Paper
-                elevation={0}
-                sx={{
-                    p: 0,
-                    borderRadius: 4,
-                    bgcolor: 'rgba(30, 41, 59, 1.0)', // Solid background to avoid transparency issues
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    overflow: 'hidden'
-                }}
-            >
-                <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                    <Tabs
-                        value={tabValue}
-                        onChange={(_, val) => setTabValue(val)}
-                        variant="fullWidth"
-                        sx={{
-                            '& .MuiTab-root': { color: 'rgba(255, 255, 255, 0.5)', fontWeight: 600 },
-                            '& .Mui-selected': { color: '#3b82f6' },
-                            '& .MuiTabs-indicator': { bgcolor: '#3b82f6' }
-                        }}
-                    >
-                        <Tab icon={<Users size={20} />} label="Friends" iconPosition="start" />
-                        <Tab
-                            icon={<Bell size={20} />}
-                            label={`Requests ${requests.length > 0 ? `(${requests.length})` : ''}`}
-                            iconPosition="start"
-                        />
-                    </Tabs>
-                </Box>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'var(--bg-secondary)', overflow: 'hidden' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.1)', width: '100%' }}>
+                <Tabs
+                    value={tabValue}
+                    onChange={(_, val) => setTabValue(val)}
+                    variant="fullWidth"
+                    textColor="primary"
+                    indicatorColor="primary"
+                    sx={{
+                        width: '100%',
+                        '& .MuiTab-root': {
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            fontWeight: 700,
+                            minHeight: 64,
+                            fontSize: '0.85rem',
+                            letterSpacing: '0.1em',
+                            transition: 'all 0.2s',
+                            '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.02)' }
+                        },
+                        '& .Mui-selected': { color: '#3b82f6 !important' },
+                        '& .MuiTabs-indicator': {
+                            bgcolor: '#3b82f6',
+                            height: 3,
+                            borderRadius: '3px 3px 0 0'
+                        },
+                        '& .MuiTabs-flexContainer': {
+                            width: '100%'
+                        }
+                    }}
+                >
+                    <Tab icon={<Users size={20} />} label="FRIENDS" iconPosition="start" />
+                    <Tab
+                        icon={<Bell size={20} />}
+                        label={`REQUESTS ${requests.length > 0 ? `(${requests.length})` : ''}`}
+                        iconPosition="start"
+                    />
+                </Tabs>
+            </Box>
 
-                <Box sx={{ p: 4 }}>
-                    {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-                    {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
+            <Box sx={{ p: 3, flex: 1, overflowY: 'auto' }}>
+                {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+                {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
 
-                    {tabValue === 0 && (
-                        <Box>
-                            <Box component="form" onSubmit={handleSendRequest} sx={{ display: 'flex', gap: 2, mb: 4 }}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Enter username to add..."
-                                    value={searchUsername}
-                                    onChange={(e) => setSearchUsername(e.target.value)}
-                                    variant="outlined"
-                                    InputProps={{
-                                        startAdornment: <Search size={18} style={{ marginRight: 8, opacity: 0.5 }} />
-                                    }}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                            color: 'white',
-                                            bgcolor: 'rgba(255,255,255,0.03)',
-                                            '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
-                                        }
-                                    }}
-                                />
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    disabled={loading || !searchUsername}
-                                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <UserPlus size={18} />}
-                                    sx={{ borderRadius: 2, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
-                                >
-                                    Add
-                                </Button>
-                            </Box>
-
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: 'white' }}>Current Friends</Typography>
-                            <List>
-                                {friends.length === 0 ? (
-                                    <Typography sx={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', py: 4 }}>No friends yet. Add someone to start sharing!</Typography>
-                                ) : (
-                                    friends.map((friend) => (
-                                        <React.Fragment key={friend.id}>
-                                            <ListItem sx={{ py: 2 }}>
-                                                <Avatar sx={{ bgcolor: '#3b82f6', mr: 2 }}>{friend.username[0].toUpperCase()}</Avatar>
-                                                <ListItemText
-                                                    primary={friend.username}
-                                                    primaryTypographyProps={{ fontWeight: 600, color: 'white' }}
-                                                />
-                                            </ListItem>
-                                            <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />
-                                        </React.Fragment>
-                                    ))
-                                )}
-                            </List>
+                {tabValue === 0 && (
+                    <Box>
+                        <Box component="form" onSubmit={handleSendRequest} sx={{ display: 'flex', gap: 2, mb: 4 }}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Enter username to add..."
+                                value={searchUsername}
+                                onChange={(e) => setSearchUsername(e.target.value)}
+                                variant="outlined"
+                                InputProps={{
+                                    startAdornment: <Search size={18} style={{ marginRight: 8, opacity: 0.5 }} />
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                        color: 'white',
+                                        bgcolor: 'rgba(255,255,255,0.03)',
+                                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                                    }
+                                }}
+                            />
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                disabled={loading || !searchUsername}
+                                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <UserPlus size={18} />}
+                                sx={{ borderRadius: 2, textTransform: 'none', px: 3, bgcolor: '#3b82f6' }}
+                            >
+                                Add
+                            </Button>
                         </Box>
-                    )}
 
-                    {tabValue === 1 && (
-                        <Box>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 700, color: 'white' }}>Pending Requests</Typography>
-                            <List>
-                                {requests.length === 0 ? (
-                                    <Typography sx={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', py: 4 }}>No pending requests.</Typography>
-                                ) : (
-                                    requests.map((req) => (
-                                        <React.Fragment key={req.friendship_id}>
-                                            <ListItem sx={{ py: 2 }}>
-                                                <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.1)', mr: 2 }}>{req.from_username[0].toUpperCase()}</Avatar>
-                                                <ListItemText
-                                                    primary={req.from_username}
-                                                    secondary={`Sent ${new Date(req.created_at).toLocaleDateString()}`}
-                                                    primaryTypographyProps={{ fontWeight: 600, color: 'white' }}
-                                                    secondaryTypographyProps={{ color: 'rgba(255,255,255,0.4)' }}
-                                                />
-                                                <ListItemSecondaryAction>
-                                                    <IconButton
-                                                        onClick={() => handleRespond(req.friendship_id, 'accept')}
-                                                        sx={{ color: '#10b981', mr: 1 }}
-                                                    >
-                                                        <Check size={20} />
-                                                    </IconButton>
-                                                    <IconButton
-                                                        onClick={() => handleRespond(req.friendship_id, 'reject')}
-                                                        sx={{ color: '#ef4444' }}
-                                                    >
-                                                        <X size={20} />
-                                                    </IconButton>
-                                                </ListItemSecondaryAction>
-                                            </ListItem>
-                                            <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />
-                                        </React.Fragment>
-                                    ))
-                                )}
-                            </List>
-                        </Box>
-                    )}
-                </Box>
-            </Paper>
-        </Container>
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: 'white', opacity: 0.9, letterSpacing: '0.05em' }}>
+                            CURRENT FRIENDS
+                        </Typography>
+                        <List disablePadding>
+                            {friends.length === 0 ? (
+                                <Typography sx={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', py: 4 }}>No friends yet. Add someone to start sharing!</Typography>
+                            ) : (
+                                friends.map((friend) => (
+                                    <React.Fragment key={friend.id}>
+                                        <ListItem sx={{ py: 1.5, px: 0 }}>
+                                            <Avatar sx={{ bgcolor: '#3b82f6', mr: 2, width: 40, height: 40 }}>{friend.username[0].toUpperCase()}</Avatar>
+                                            <ListItemText
+                                                primary={friend.username}
+                                                primaryTypographyProps={{ fontWeight: 600, color: 'white' }}
+                                            />
+                                        </ListItem>
+                                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />
+                                    </React.Fragment>
+                                ))
+                            )}
+                        </List>
+                    </Box>
+                )}
+
+                {tabValue === 1 && (
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: 'white', opacity: 0.9, letterSpacing: '0.05em' }}>
+                            PENDING REQUESTS
+                        </Typography>
+                        <List disablePadding>
+                            {requests.length === 0 ? (
+                                <Typography sx={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', py: 4 }}>No pending requests.</Typography>
+                            ) : (
+                                requests.map((req) => (
+                                    <React.Fragment key={req.friendship_id}>
+                                        <ListItem sx={{ py: 1.5, px: 0 }}>
+                                            <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.1)', mr: 2, width: 40, height: 40 }}>{req.from_username[0].toUpperCase()}</Avatar>
+                                            <ListItemText
+                                                primary={req.from_username}
+                                                secondary={`Sent ${new Date(req.created_at).toLocaleDateString()}`}
+                                                primaryTypographyProps={{ fontWeight: 600, color: 'white' }}
+                                                secondaryTypographyProps={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}
+                                            />
+                                            <ListItemSecondaryAction sx={{ right: 0 }}>
+                                                <IconButton
+                                                    onClick={() => handleRespond(req.friendship_id, 'accept')}
+                                                    sx={{ color: '#10b981', bgcolor: 'rgba(16, 185, 129, 0.1)', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.2)' }, mr: 1 }}
+                                                    size="small"
+                                                >
+                                                    <Check size={18} />
+                                                </IconButton>
+                                                <IconButton
+                                                    onClick={() => handleRespond(req.friendship_id, 'reject')}
+                                                    sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.1)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.2)' } }}
+                                                    size="small"
+                                                >
+                                                    <X size={18} />
+                                                </IconButton>
+                                            </ListItemSecondaryAction>
+                                        </ListItem>
+                                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />
+                                    </React.Fragment>
+                                ))
+                            )}
+                        </List>
+                    </Box>
+                )}
+            </Box>
+        </Box>
     );
 };
 
