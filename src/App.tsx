@@ -13,10 +13,6 @@ import {
   CssBaseline,
   Box,
   Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Button,
   Dialog,
   IconButton
@@ -42,10 +38,54 @@ function Dashboard() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('all');
   const [isSocialOpen, setIsSocialOpen] = useState(false);
 
-  const filteredDevices = useMemo(() => {
-    if (selectedDeviceId === 'all') return devices;
-    return devices.filter(d => d.id === selectedDeviceId);
-  }, [devices, selectedDeviceId]);
+  const { myDevices, sharedDevices } = useMemo(() => {
+    return {
+      myDevices: devices.filter(d => d.user_id === user?.id),
+      sharedDevices: devices.filter(d => d.user_id !== user?.id)
+    };
+  }, [devices, user]);
+
+  const renderDeviceCard = (device: any, isMe: boolean) => {
+    const hasLocation = !!locations[device.id];
+    return (
+      <Box
+        key={device.id}
+        onClick={() => setSelectedDeviceId(device.id)}
+        sx={{
+          padding: '1rem',
+          backgroundColor: selectedDeviceId === device.id ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)',
+          borderRadius: '12px',
+          border: '1px solid',
+          borderColor: selectedDeviceId === device.id ? 'var(--accent-primary)' : 'var(--border-color)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          '&:hover': {
+            borderColor: 'var(--accent-secondary)',
+            bgcolor: 'rgba(255,255,255,0.05)'
+          }
+        }}
+      >
+        <div style={{
+          padding: '0.5rem',
+          backgroundColor: hasLocation ? 'rgba(59, 130, 246, 0.1)' : 'rgba(148, 163, 184, 0.1)',
+          borderRadius: '8px'
+        }}>
+          <Smartphone size={20} color={hasLocation ? 'var(--accent-primary)' : 'var(--text-muted)'} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'white' }}>
+            {isMe ? device.name : device.username}
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            {hasLocation ? 'Online' : 'Offline'}
+          </p>
+        </div>
+      </Box>
+    );
+  };
 
   return (
     <div className="app-container">
@@ -87,76 +127,45 @@ function Dashboard() {
         </Box>
 
         <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }}>
-          <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="device-select-label" sx={{ color: 'var(--text-muted)' }}>Filter Device</InputLabel>
-              <Select
-                labelId="device-select-label"
-                id="device-select"
-                value={selectedDeviceId}
-                label="Filter Device"
-                onChange={(e) => setSelectedDeviceId(e.target.value)}
-                sx={{
-                  bgcolor: 'var(--bg-tertiary)',
-                  borderRadius: '8px',
-                  color: 'var(--text-primary)'
-                }}
-              >
-                <MenuItem value="all">All Devices</MenuItem>
-                {devices.map(device => (
-                  <MenuItem key={device.id} value={device.id}>{device.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '0.875rem', fontWeight: 600 }}>Devices ({filteredDevices.length})</h2>
-            <button
-              onClick={refetch}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-            >
-              <RefreshCw size={16} />
-            </button>
+          {/* Header with Refresh */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'white' }}>Find My</h2>
+            <IconButton onClick={refetch} size="small" sx={{ color: 'var(--text-muted)' }}>
+              <RefreshCw size={18} />
+            </IconButton>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {loading ? (
               <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Loading devices...</p>
             ) : error ? (
               <p style={{ color: '#ef4444', fontSize: '0.875rem' }}>{error}</p>
             ) : (
-              filteredDevices.map(device => {
-                const hasLocation = !!locations[device.id];
-                return (
-                  <div
-                    key={device.id}
-                    style={{
-                      padding: '1rem',
-                      backgroundColor: 'var(--bg-tertiary)',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem'
-                    }}
-                  >
-                    <div style={{
-                      padding: '0.5rem',
-                      backgroundColor: hasLocation ? 'rgba(59, 130, 246, 0.1)' : 'rgba(148, 163, 184, 0.1)',
-                      borderRadius: '8px'
-                    }}>
-                      <Smartphone size={20} color={hasLocation ? 'var(--accent-primary)' : 'var(--text-muted)'} />
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: '0.875rem', fontWeight: 600 }}>{device.name}</h3>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {hasLocation ? 'Online' : 'Offline'}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
+              <>
+                {/* ME Section */}
+                {myDevices.length > 0 && (
+                  <Box>
+                    <Typography variant="overline" sx={{ color: 'var(--text-muted)', fontWeight: 800, mb: 1.5, display: 'block', letterSpacing: '0.1em' }}>
+                      ME
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {myDevices.map(device => renderDeviceCard(device, true))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* PEOPLE Section */}
+                {sharedDevices.length > 0 && (
+                  <Box>
+                    <Typography variant="overline" sx={{ color: 'var(--text-muted)', fontWeight: 800, mb: 1.5, display: 'block', letterSpacing: '0.1em' }}>
+                      PEOPLE
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {sharedDevices.map(device => renderDeviceCard(device, false))}
+                    </Box>
+                  </Box>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -218,7 +227,7 @@ function Dashboard() {
       </Dialog>
 
       <main style={{ flex: 1, height: '100%', position: 'relative' }}>
-        <Map locations={locations} devices={filteredDevices} />
+        <Map locations={locations} devices={devices} selectedDeviceId={selectedDeviceId} />
 
         <div style={{
           position: 'absolute',
