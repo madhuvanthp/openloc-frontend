@@ -19,7 +19,7 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
 
 const Login: React.FC = () => {
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -38,16 +38,17 @@ const Login: React.FC = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ identifier, password }),
             });
 
-            const data = await response.json();
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const data = isJson ? await response.json() : null;
 
             if (!response.ok) {
-                throw new Error(data.message || 'Invalid credentials');
+                throw new Error(data?.message || 'Invalid credentials or server error');
             }
 
-            login(data.token, data.user_id, email);
+            login(data.token, data.user_id, data.email, data.username);
             navigate('/');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -112,7 +113,7 @@ const Login: React.FC = () => {
                             OpenLoc
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: 500 }}>
-                            Sign in to OpenLoc
+                            Sign in with your Email or Username
                         </Typography>
                     </Box>
 
@@ -125,13 +126,13 @@ const Login: React.FC = () => {
                             margin="normal"
                             required
                             fullWidth
-                            id="email"
-                            label="Email Address"
-                            name="email"
-                            autoComplete="email"
+                            id="identifier"
+                            label="Email or Username"
+                            name="identifier"
+                            autoComplete="username"
                             autoFocus
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                             variant="outlined"
                             sx={{
                                 mb: 2,

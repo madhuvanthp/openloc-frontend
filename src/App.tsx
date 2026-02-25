@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import Map from './components/Map/Map';
 import { useLocationData } from './hooks/useLocationData';
-import { MapPin, Smartphone, RefreshCw, Layers, LogOut } from 'lucide-react';
+import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
+import SocialCenter from './components/Social/SocialCenter';
 import {
   ThemeProvider,
   createTheme,
@@ -15,8 +16,12 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Button,
+  Dialog,
+  IconButton
 } from '@mui/material';
+import { X } from 'lucide-react';
 
 const darkTheme = createTheme({
   palette: {
@@ -35,6 +40,7 @@ function Dashboard() {
   const { user, logout } = useAuth();
   const { devices, locations, loading, error, refetch } = useLocationData(user?.id || '');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('all');
+  const [isSocialOpen, setIsSocialOpen] = useState(false);
 
   const filteredDevices = useMemo(() => {
     if (selectedDeviceId === 'all') return devices;
@@ -49,10 +55,36 @@ function Dashboard() {
             <MapPin className="text-accent" style={{ color: 'var(--accent-primary)' }} />
             OpenLoc
           </h1>
-          <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mt: 0.5 }}>
-            Logged in as: {user?.email}
-          </Typography>
+          <Box sx={{ mt: 2, p: 1.5, bgcolor: 'rgba(255,255,255,0.03)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Typography variant="body2" sx={{ color: 'white', fontWeight: 700, lineHeight: 1.2 }}>
+              {user?.username}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mt: 0.2, fontSize: '0.65rem' }}>
+              {user?.email}
+            </Typography>
+          </Box>
         </header>
+
+        <Box sx={{ px: 2, pt: 2 }}>
+          <Button
+            fullWidth
+            onClick={() => setIsSocialOpen(true)}
+            startIcon={<UsersIcon size={18} />}
+            sx={{
+              justifyContent: 'flex-start',
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 600,
+              bgcolor: 'rgba(59, 130, 246, 0.1)',
+              borderRadius: 2,
+              py: 1,
+              px: 2,
+              '&:hover': { bgcolor: 'rgba(59, 130, 246, 0.2)' }
+            }}
+          >
+            Social Center
+          </Button>
+        </Box>
 
         <div style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }}>
           <Box sx={{ mb: 3 }}>
@@ -129,27 +161,61 @@ function Dashboard() {
           </div>
         </div>
 
-        <footer style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>OpenLoc</span>
-          <button
-            onClick={logout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'none',
-              border: 'none',
-              color: '#ef4444',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 600
-            }}
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
+        <footer style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>OpenLoc</span>
+            <button
+              onClick={logout}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '0.75rem'
+              }}
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
+          </div>
         </footer>
       </aside>
+
+      <Dialog
+        open={isSocialOpen}
+        onClose={() => setIsSocialOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-secondary)',
+            backgroundImage: 'none',
+            borderRadius: 4,
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <Box sx={{ position: 'relative' }}>
+          <IconButton
+            onClick={() => setIsSocialOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 16,
+              top: 16,
+              zIndex: 10,
+              color: 'white',
+              bgcolor: 'rgba(0,0,0,0.2)',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.4)' }
+            }}
+          >
+            <X size={20} />
+          </IconButton>
+          {isSocialOpen && <SocialCenter />}
+        </Box>
+      </Dialog>
 
       <main style={{ flex: 1, height: '100%', position: 'relative' }}>
         <Map locations={locations} devices={filteredDevices} />

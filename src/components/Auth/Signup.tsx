@@ -20,6 +20,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
 
 const Signup: React.FC = () => {
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +48,7 @@ const Signup: React.FC = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, username, password }),
             });
 
             const signupData = await signupRes.json();
@@ -62,7 +63,7 @@ const Signup: React.FC = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ identifier: email, password }),
             });
 
             const loginData = await loginRes.json();
@@ -71,7 +72,7 @@ const Signup: React.FC = () => {
                 throw new Error(loginData.message || 'Signup successful, but login failed');
             }
 
-            login(loginData.token, loginData.user_id, email);
+            login(loginData.token, loginData.user_id, loginData.email, loginData.username);
             navigate('/');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -149,11 +150,35 @@ const Signup: React.FC = () => {
                             margin="normal"
                             required
                             fullWidth
+                            id="username"
+                            label="Username"
+                            name="username"
+                            autoComplete="username"
+                            autoFocus
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            variant="outlined"
+                            sx={{
+                                mb: 2,
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 3,
+                                    color: 'white',
+                                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.1)' },
+                                    '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.2)' },
+                                    '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
+                                },
+                                '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.4)' },
+                                '& .MuiInputLabel-root.Mui-focused': { color: '#3b82f6' }
+                            }}
+                        />
+                        <TextField
+                            margin="normal"
+                            required
+                            fullWidth
                             id="email"
                             label="Email Address"
                             name="email"
                             autoComplete="email"
-                            autoFocus
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             variant="outlined"
