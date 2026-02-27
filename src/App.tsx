@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Map from './components/Map/Map';
 import { useLocationData, API_BASE } from './hooks/useLocationData';
-import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon, Navigation, Play, Square, Star } from 'lucide-react';
+import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon, Navigation, Play, Square, Star, Plus } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Auth/Login';
@@ -15,7 +15,11 @@ import {
   Typography,
   Button,
   Dialog,
-  IconButton
+  IconButton,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import { X } from 'lucide-react';
 
@@ -38,6 +42,9 @@ function Dashboard() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('all');
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [trackingDeviceId, setTrackingDeviceId] = useState<string | null>(null);
+  const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
+  const [newDeviceName, setNewDeviceName] = useState('');
+  const [isCreatingDevice, setIsCreatingDevice] = useState(false);
 
   useEffect(() => {
     if (!trackingDeviceId) return;
@@ -140,6 +147,48 @@ function Dashboard() {
     } catch (err) {
       console.error('Error setting primary device:', err);
       alert('Error setting primary device');
+    }
+  };
+
+  const handleCreateDevice = async () => {
+    if (!newDeviceName.trim()) return;
+    setIsCreatingDevice(true);
+    try {
+      const res = await fetch(`${API_BASE}/devices`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ user_id: user?.id, name: newDeviceName })
+      });
+
+      if (res.ok) {
+        const device = await res.json();
+        // Initialize with default location [0, 0]
+        await fetch(`${API_BASE}/v1/location`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            device_id: device.id,
+            latitude: 0,
+            longitude: 0,
+            altitude: 0,
+            speed: 0,
+          })
+        });
+
+        setIsAddDeviceOpen(false);
+        setNewDeviceName('');
+        refetch();
+      } else {
+        alert('Failed to create device');
+      }
+    } catch (err) {
+      console.error('Error creating device:', err);
+      alert('Error creating device');
+    } finally {
+      setIsCreatingDevice(false);
     }
   };
 
@@ -286,9 +335,18 @@ function Dashboard() {
                 {/* ME Section */}
                 {myDevices.length > 0 && (
                   <Box>
-                    <Typography variant="overline" sx={{ color: 'var(--text-muted)', fontWeight: 800, mb: 1.5, display: 'block', letterSpacing: '0.1em' }}>
-                      ME
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                      <Typography variant="overline" sx={{ color: 'var(--text-muted)', fontWeight: 800, m: 0, display: 'block', letterSpacing: '0.1em' }}>
+                        ME
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() => setIsAddDeviceOpen(true)}
+                        sx={{ color: 'var(--accent-primary)', p: 0 }}
+                      >
+                        <Plus size={16} />
+                      </IconButton>
+                    </Box>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       {myDevices.map(device => renderDeviceCard(device, true))}
                     </Box>
@@ -391,6 +449,60 @@ function Dashboard() {
           {selectedDeviceId === 'all' ? 'Tracking All' : 'Tracking Selected'}
         </div>
       </main>
+
+      {/* Add Device Dialog */}
+      <Dialog
+        open={isAddDeviceOpen}
+        onClose={() => !isCreatingDevice && setIsAddDeviceOpen(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: 'var(--bg-secondary)',
+            backgroundImage: 'none',
+            borderRadius: 3,
+            border: '1px solid var(--border-color)',
+            minWidth: '300px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: 'white', fontWeight: 700 }}>Add New Device</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Device Name"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={newDeviceName}
+            onChange={(e) => setNewDeviceName(e.target.value)}
+            disabled={isCreatingDevice}
+            sx={{
+              mt: 1,
+              '& .MuiOutlinedInput-root': {
+                color: 'white',
+                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                '&.Mui-focused fieldset': { borderColor: 'var(--accent-primary)' },
+              },
+              '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
+              '& .MuiInputLabel-root.Mui-focused': { color: 'var(--accent-primary)' }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setIsAddDeviceOpen(false)} sx={{ color: 'var(--text-secondary)' }} disabled={isCreatingDevice}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreateDevice}
+            variant="contained"
+            disabled={isCreatingDevice || !newDeviceName.trim()}
+            sx={{ fontWeight: 600 }}
+          >
+            {isCreatingDevice ? 'Creating...' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
