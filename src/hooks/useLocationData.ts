@@ -4,6 +4,8 @@ import type { Device, Location } from '../types';
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
 const WS_BASE = import.meta.env.VITE_WS_BASE || 'ws://localhost:8080/ws';
 
+export { API_BASE };
+
 export function useLocationData(userId: string) {
     const [devices, setDevices] = useState<Device[]>([]);
     const [locations, setLocations] = useState<Record<string, Location>>({});

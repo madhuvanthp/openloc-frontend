@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Map from './components/Map/Map';
-import { useLocationData } from './hooks/useLocationData';
-import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon } from 'lucide-react';
+import { useLocationData, API_BASE } from './hooks/useLocationData';
+import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon, Navigation, Play, Square } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Auth/Login';
@@ -37,6 +37,90 @@ function Dashboard() {
   const { devices, locations, loading, error, refetch } = useLocationData(user?.id || '');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('all');
   const [isSocialOpen, setIsSocialOpen] = useState(false);
+  const [trackingDeviceId, setTrackingDeviceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!trackingDeviceId) return;
+
+    let watchId: number;
+
+    const handleSuccess = async (position: GeolocationPosition) => {
+      try {
+        await fetch(`${API_BASE}/v1/location`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            device_id: trackingDeviceId,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            altitude: position.coords.altitude || 0,
+            speed: position.coords.speed || 0,
+          })
+        });
+      } catch (err) {
+        console.error('Failed to auto-push location:', err);
+      }
+    };
+
+    const handleError = (error: GeolocationPositionError) => {
+      console.error('Geolocation error:', error);
+      alert(`Geolocation error: ${error.message}`);
+      setTrackingDeviceId(null);
+    };
+
+    if ('geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+    } else {
+      alert('Geolocation is not supported by your browser');
+      setTrackingDeviceId(null);
+    }
+
+    return () => {
+      if (watchId !== undefined) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [trackingDeviceId]);
+
+  const pushSingleLocation = (e: React.MouseEvent, deviceId: string) => {
+    e.stopPropagation();
+    if (!('geolocation' in navigator)) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const res = await fetch(`${API_BASE}/v1/location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              device_id: deviceId,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              altitude: position.coords.altitude || 0,
+              speed: position.coords.speed || 0,
+            })
+          });
+          if (!res.ok) alert('Failed to push location');
+        } catch (err) {
+          console.error('Failed to push location:', err);
+          alert('Failed to push location');
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        alert(`Geolocation error: ${error.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
 
   const { myDevices, sharedDevices } = useMemo(() => {
     return {
@@ -47,6 +131,7 @@ function Dashboard() {
 
   const renderDeviceCard = (device: any, isMe: boolean) => {
     const hasLocation = !!locations[device.id];
+    const isTracking = trackingDeviceId === device.id;
     return (
       <Box
         key={device.id}
@@ -76,11 +161,36 @@ function Dashboard() {
           <Smartphone size={20} color={hasLocation ? 'var(--accent-primary)' : 'var(--text-muted)'} />
         </div>
         <div style={{ flex: 1 }}>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'white' }}>
-            {isMe ? device.name : device.username}
-          </h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            {hasLocation ? 'Online' : 'Offline'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'white', margin: 0 }}>
+              {isMe ? device.name : device.username}
+            </h3>
+            {isMe && (
+              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => pushSingleLocation(e, device.id)}
+                  title="Push Location Now"
+                  sx={{ color: 'var(--text-secondary)', padding: '4px', '&:hover': { color: 'var(--accent-primary)', bgcolor: 'rgba(59, 130, 246, 0.1)' } }}
+                >
+                  <Navigation size={14} />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTrackingDeviceId(isTracking ? null : device.id);
+                  }}
+                  title={isTracking ? "Stop Tracking" : "Start Auto-Tracking"}
+                  sx={{ color: isTracking ? '#10b981' : 'var(--text-secondary)', padding: '4px', '&:hover': { color: isTracking ? '#ef4444' : '#10b981', bgcolor: 'rgba(16, 185, 129, 0.1)' } }}
+                >
+                  {isTracking ? <Square size={14} /> : <Play size={14} />}
+                </IconButton>
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: '0.75rem', color: isTracking ? '#10b981' : 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+            {isTracking ? 'Tracking Live...' : (hasLocation ? 'Online' : 'Offline')}
           </p>
         </div>
       </Box>
