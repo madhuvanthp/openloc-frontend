@@ -72,7 +72,7 @@ const Signup: React.FC = () => {
                 throw new Error(loginData.message || 'Signup successful, but login failed');
             }
 
-            login(loginData.token, loginData.user_id, loginData.email, loginData.username);
+            login(loginData.token, loginData.user_id, loginData.email, loginData.username, loginData.primary_device_id);
             navigate('/');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');

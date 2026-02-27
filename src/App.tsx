@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Map from './components/Map/Map';
 import { useLocationData, API_BASE } from './hooks/useLocationData';
-import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon, Navigation, Play, Square } from 'lucide-react';
+import { MapPin, Smartphone, RefreshCw, Layers, LogOut, Users as UsersIcon, Navigation, Play, Square, Star } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Auth/Login';
@@ -33,7 +33,7 @@ const darkTheme = createTheme({
 });
 
 function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, updatePrimaryDevice, logout } = useAuth();
   const { devices, locations, loading, error, refetch } = useLocationData(user?.id || '');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('all');
   const [isSocialOpen, setIsSocialOpen] = useState(false);
@@ -121,6 +121,28 @@ function Dashboard() {
     );
   };
 
+  const handleSetPrimary = async (e: React.MouseEvent, deviceId: string) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`${API_BASE}/devices/primary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Fallback if context not ideal
+        },
+        body: JSON.stringify({ device_id: deviceId })
+      });
+      if (res.ok) {
+        updatePrimaryDevice(deviceId);
+      } else {
+        alert('Failed to update primary device');
+      }
+    } catch (err) {
+      console.error('Error setting primary device:', err);
+      alert('Error setting primary device');
+    }
+  };
+
 
   const { myDevices, sharedDevices } = useMemo(() => {
     return {
@@ -132,6 +154,7 @@ function Dashboard() {
   const renderDeviceCard = (device: any, isMe: boolean) => {
     const hasLocation = !!locations[device.id];
     const isTracking = trackingDeviceId === device.id;
+    const isPrimary = user?.primary_device_id === device.id;
     return (
       <Box
         key={device.id}
@@ -167,6 +190,14 @@ function Dashboard() {
             </h3>
             {isMe && (
               <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => handleSetPrimary(e, device.id)}
+                  title={isPrimary ? "Primary Device" : "Set as Primary"}
+                  sx={{ color: isPrimary ? '#fbbf24' : 'var(--text-secondary)', padding: '4px', '&:hover': { color: '#fbbf24', bgcolor: 'rgba(251, 191, 36, 0.1)' } }}
+                >
+                  <Star size={14} fill={isPrimary ? '#fbbf24' : 'none'} />
+                </IconButton>
                 <IconButton
                   size="small"
                   onClick={(e) => pushSingleLocation(e, device.id)}

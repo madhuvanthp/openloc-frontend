@@ -48,7 +48,7 @@ const Login: React.FC = () => {
                 throw new Error(data?.message || 'Invalid credentials or server error');
             }
 
-            login(data.token, data.user_id, data.email, data.username);
+            login(data.token, data.user_id, data.email, data.username, data.primary_device_id);
             navigate('/');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong');
