@@ -21,6 +21,7 @@ interface MapProps {
     locations: Record<string, Location>;
     devices: Device[];
     selectedDeviceId?: string;
+    currentUserId?: string;
 }
 
 function AutoCenter({ locations }: { locations: Record<string, Location> }) {
@@ -45,7 +46,7 @@ function AutoCenter({ locations }: { locations: Record<string, Location> }) {
     return null;
 }
 
-export default function Map({ locations, devices, selectedDeviceId = 'all' }: MapProps) {
+export default function Map({ locations, devices, selectedDeviceId = 'all', currentUserId }: MapProps) {
     // Filter locations to only show the selected device(s) - USED ONLY FOR CENTERING
     const filteredLocations = Object.entries(locations).filter(([deviceId, loc]) => {
         if (!loc || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') return false;
@@ -78,9 +79,9 @@ export default function Map({ locations, devices, selectedDeviceId = 'all' }: Ma
                     // Determine display name: use specific name for own devices, username for friends, or fallback
                     let displayName = 'Unknown Device';
                     if (device) {
-                        // Check if the device belongs to the current user (if username matches name, it's likely a friend's device we only know by username)
-                        // A simple heuristic is that if it has a specific name we use it, otherwise fallback to username
-                        displayName = device.name || device.username || 'Unknown Device';
+                        // If it's my device, show the device name. If it's a friend's device, strictly show their username.
+                        const isMe = device.user_id === currentUserId;
+                        displayName = isMe ? (device.name || 'My Device') : (device.username || 'Friend');
                     }
 
                     const isSelected = selectedDeviceId === 'all' || selectedDeviceId === deviceId;

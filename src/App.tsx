@@ -337,7 +337,7 @@ function Dashboard() {
       </Dialog>
 
       <main style={{ flex: 1, height: '100%', position: 'relative' }}>
-        <Map locations={locations} devices={devices} selectedDeviceId={selectedDeviceId} />
+        <Map locations={locations} devices={devices} selectedDeviceId={selectedDeviceId} currentUserId={user?.id} />
 
         <div style={{
           position: 'absolute',
